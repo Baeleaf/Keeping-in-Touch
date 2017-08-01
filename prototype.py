@@ -45,18 +45,30 @@ def sanitizeUpdateInput(contactList, nameInput, propInput, valueInput):
 	userInput = [nameInput, propInput, valueInput, False]
 	nameExists = False
 	propExists = True
+	if propInput.lower() not in 'Last Contacted'.lower() and propInput.lower() not in 'How Long'.lower():
+		for k, v in contactList.items(): # loops through names (string, dict)
+			if nameInput == "" or propInput == "":
+				break
 
-	for k, v in contactList.items(): # loops through names (string, dict)
-		if k.lower() in nameInput.lower():
-			nameExists = True
-		for key, value in v.items(): # loops through values (string, string)
-			if key.lower() in propInput.lower():
-				propExists = True
-		if nameExists and propExists:
-			userInput[3] = True
-			return userInput
-		else:
-			return userInput
+			if nameInput.lower() in k.lower():
+				nameExists = True
+				userInput[0] = k
+			else:
+				continue
+
+			for key, value in v.items(): # loops through values (string, string)
+				if propInput.lower() in key.lower() or key.lower() in propInput.lower():
+					propExists = True
+					userInput[1] = key
+	else:
+		print "\nYou may not edit these properties."
+		time.sleep(1)
+
+	if nameExists and propExists:
+		userInput[3] = True
+		return userInput
+	else:
+		return userInput
 
 # Main Functions
 
@@ -79,13 +91,14 @@ def update(contactList, user, key, value):
 	mergeMe = {
 		key: value
 	}
-		
+	
+	contactList[user]['Last Contacted'] = str(datetime.datetime.now())
 	contactList[user].update(mergeMe)
 
 
 def view(contactList):
 	if not contactList:
-		print "There doesn't seem to be any here. Add a user!"
+		print "\nThere doesn't seem to be anything here. Add a contact!\n"
 		return
 
 	for k, v in contactList.items(): # loops through names (string, dict)
@@ -111,19 +124,20 @@ def main(contacts):
 				time.sleep(1)
 				printMenu()
 			elif userInput == '2':
-				badInput = True
-				while badInput:
-					updateInput = sanitizeUpdateInput(contacts, nameInput = raw_input("Who would you like to update? "), propInput = raw_input("What would you like to change? "), valueInput = raw_input("Edit below:\n"))
+				if not contacts:
+					print "\nThere doesn't seem to be anything here. Add a contact!\n"
+				
+				else:
+					updateInput = sanitizeUpdateInput(contacts, nameInput = raw_input("Who would you like to update? ").title(), propInput = raw_input("What would you like to change? ").title(), valueInput = raw_input("Edit below:\n"))
 					
 					if updateInput[3]:
 						update(contacts, updateInput[0],updateInput[1],updateInput[2])
-						badInput = False
+						print "\nEntry Updated.\n"
+						time.sleep(1)
 					else:
-						print("That name or property does not exist. Please try again.")
-						time.sleep(2)
-				
-				print "\nEntry Updated.\n"
-				time.sleep(1)
+						print("\nThat name or property is not available. Please try again.\n")
+						time.sleep(1)
+	
 				printMenu()
 			elif userInput == '3':
 				view(contacts)
@@ -139,7 +153,7 @@ def main(contacts):
 				printMenu()
 
 	except KeyError:
-		print("An error has occurred. Restarting the program. Please wait.")
+		print("An unexpected error has occurred. Restarting the program. Please wait.")
 		time.sleep(5)
 		init()
 init()
